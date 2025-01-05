@@ -33,20 +33,8 @@ public class ExperienceCompany {
     @Basic
     @Column(name = "description", nullable = false, length = -1)
     private String description;
-    @Basic
-    @Column(name = "user_id", nullable = false)
-    private int userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ExperienceCompany that = (ExperienceCompany) o;
-        return idExperienceCompany == that.idExperienceCompany && userId == that.userId && Objects.equals(companyName, that.companyName) && Objects.equals(mst, that.mst) && Objects.equals(companyUrl, that.companyUrl) && Objects.equals(companyImg, that.companyImg) && Objects.equals(role, that.role) && Objects.equals(description, that.description);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(idExperienceCompany, companyName, mst, companyUrl, companyImg, role, description, userId);
-    }
 }

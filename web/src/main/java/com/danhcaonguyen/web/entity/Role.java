@@ -20,16 +20,5 @@ public class Role {
     private String roleName;
     @OneToMany(mappedBy = "role", cascade = CascadeType.ALL)
     private List<Account> accounts;
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Role role = (Role) o;
-        return idRole == role.idRole && Objects.equals(roleName, role.roleName);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(idRole, roleName);
-    }
 }

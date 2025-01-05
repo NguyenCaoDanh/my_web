@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Objects;
+import java.util.List;
 
 @Setter
 @Getter
@@ -58,4 +58,22 @@ public class User {
     @OneToOne
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL) // Corrected 'mappedBy'
+    private List<Activities> activities;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Projects> projects;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Skills> skills;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Post> post;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<Cv> cv;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<ExperienceCompany> experienceCompanies;
 }

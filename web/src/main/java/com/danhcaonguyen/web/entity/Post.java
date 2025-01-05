@@ -24,20 +24,8 @@ public class Post {
     @Basic
     @Column(name = "created_at", nullable = false)
     private Timestamp createdAt;
-    @Basic
-    @Column(name = "user_id", nullable = false)
-    private int userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Post post = (Post) o;
-        return idPost == post.idPost && userId == post.userId && Objects.equals(title, post.title) && Objects.equals(content, post.content) && Objects.equals(createdAt, post.createdAt);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(idPost, title, content, createdAt, userId);
-    }
 }

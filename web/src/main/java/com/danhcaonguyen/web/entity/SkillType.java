@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Objects;
+import java.util.List;
 
 @Setter
 @Getter
@@ -15,20 +15,11 @@ public class SkillType {
     @Id
     @Column(name = "id_skill_type", nullable = false)
     private int idSkillType;
+
     @Basic
     @Column(name = "type", nullable = false, length = 45)
     private String type;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SkillType skillType = (SkillType) o;
-        return idSkillType == skillType.idSkillType && Objects.equals(type, skillType.type);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(idSkillType, type);
-    }
+    @OneToMany(mappedBy = "skillType", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Skills> skills;
 }

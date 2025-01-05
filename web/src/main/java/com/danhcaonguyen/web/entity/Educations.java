@@ -32,20 +32,8 @@ public class Educations {
     @Basic
     @Column(name = "gpa_10", nullable = true, precision = 0)
     private Double gpa10;
-    @Basic
-    @Column(name = "user_id", nullable = false)
-    private int userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Educations that = (Educations) o;
-        return idEducations == that.idEducations && start == that.start && userId == that.userId && Objects.equals(end, that.end) && Objects.equals(status, that.status) && Objects.equals(schoolName, that.schoolName) && Objects.equals(gpa4, that.gpa4) && Objects.equals(gpa10, that.gpa10);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(idEducations, start, end, status, schoolName, gpa4, gpa10, userId);
-    }
 }

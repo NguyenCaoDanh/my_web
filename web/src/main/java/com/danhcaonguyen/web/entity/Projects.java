@@ -32,20 +32,9 @@ public class Projects {
     @Basic
     @Column(name = "role", nullable = false, length = 45)
     private String role;
-    @Basic
-    @Column(name = "user_id", nullable = false)
-    private int userId;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Projects projects = (Projects) o;
-        return idProjects == projects.idProjects && userId == projects.userId && Objects.equals(title, projects.title) && Objects.equals(description, projects.description) && Objects.equals(imgUrl, projects.imgUrl) && Objects.equals(githubUrl, projects.githubUrl) && Objects.equals(technologies, projects.technologies) && Objects.equals(role, projects.role);
-    }
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(idProjects, title, description, imgUrl, githubUrl, technologies, role, userId);
-    }
 }
