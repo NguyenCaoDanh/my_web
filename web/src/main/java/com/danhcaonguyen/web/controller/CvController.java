@@ -23,7 +23,7 @@ import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/cv")
-public class CvController extends GenericController {
+public class CvController extends GenericController<Cv, Integer> {
     @Autowired
     private CvService cvService;
     @Override

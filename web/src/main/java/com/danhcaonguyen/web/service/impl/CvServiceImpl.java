@@ -43,7 +43,7 @@ public class CvServiceImpl  implements CvService {
 
             // Kiểm tra nếu CV đã tồn tại
 
-            if (currentAccount.getUser() != null) {
+            if (currentAccount.getUser() == null) {
                 // Cập nhật thông tin CV
                 throw new ErrorHandler(HttpStatus.BAD_REQUEST, "User not associated with the account");
 
