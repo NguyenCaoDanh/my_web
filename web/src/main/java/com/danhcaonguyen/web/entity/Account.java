@@ -19,6 +19,7 @@ public class Account implements UserDetails {
     @Column(name = "id_account", nullable = false)
     private int idAccount;
 
+
     @Basic
     @Column(name = "username", nullable = false, length = 225, unique = true)
     private String username;
