@@ -23,7 +23,7 @@ import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/cv")
-public class CvController extends GenericController {
+public class CvController extends GenericController<Cv,Integer> {
     @Autowired
     private CvService cvService;
     @Override
@@ -69,7 +69,4 @@ public class CvController extends GenericController {
                     .body(new ExceptionResponse("An error occurred: " + e.getMessage()));
         }
     }
-
-
-
 }
