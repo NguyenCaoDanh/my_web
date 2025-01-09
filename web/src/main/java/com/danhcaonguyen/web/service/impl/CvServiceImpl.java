@@ -69,11 +69,23 @@ public class CvServiceImpl  implements CvService {
     @Override
     public Cv findOne(Integer id) {
         try {
+            // Lấy tài khoản đang đăng nhập
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            Account currentAccount = accountRepository.findByUsername(username)
+                    .orElseThrow(() -> new ErrorHandler(HttpStatus.UNAUTHORIZED, "Account not found"));
+
+            // Kiểm tra nếu CV đã tồn tại
+            if (currentAccount.getUser() == null) {
+                // Cập nhật thông tin CV
+                throw new ErrorHandler(HttpStatus.BAD_REQUEST, "User not associated with the account");
+
+            }
             return cvRepository.findById(id).get();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
+
 
     @Override
     public Optional<Cv> update(Integer id) {
