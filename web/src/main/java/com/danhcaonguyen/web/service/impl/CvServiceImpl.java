@@ -58,21 +58,7 @@ public class CvServiceImpl  implements CvService {
 
     @Override
     public void delete(Integer cvId) {
-        Cv cv = cvRepository.findById(cvId)
-                .orElseThrow(() -> new ErrorHandler(HttpStatus.NOT_FOUND, "CV not found"));
 
-        // Xóa file trên hệ thống
-        try {
-            if (cv.getLink() != null) {
-                String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/cv/";
-                Path filePath = Paths.get(uploadDir, cv.getLink().substring(4));
-                Files.deleteIfExists(filePath);
-            }
-            cvRepository.delete(cv);
-
-        } catch (IOException e) {
-            throw new RuntimeException("Error while deleting CV: " + e.getMessage(), e);
-        }
     }
 
     @Override
@@ -81,9 +67,9 @@ public class CvServiceImpl  implements CvService {
     }
 
     @Override
-    public Cv findOne(Integer integer) {
+    public Cv findOne(Integer id) {
         try {
-            return cvRepository.findById(integer).get();
+            return cvRepository.findById(id).get();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -99,6 +85,11 @@ public class CvServiceImpl  implements CvService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }    }
+
+    @Override
+    public Page<Cv> findAllPage(Pageable pageable) {
+        return null;
+    }
 
 
 }

@@ -9,17 +9,16 @@ import com.danhcaonguyen.web.generic.IService;
 import com.danhcaonguyen.web.service.CvService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/cv")
@@ -30,8 +29,12 @@ public class CvController extends GenericController<Cv, Integer> {
     public IService<Cv,Integer> getService() {
         return cvService;
     }
+    private RequestResponse createResponse(String message, Object data) {
+        return new RequestResponse(LocalDateTime.now().toString(), message, data);
+    }
      @PostMapping("/save")
     public ResponseEntity<?> saveOrUpdatePersonalInfo(
+
             @RequestParam("name") String userJson,
             @RequestParam(value = "link", required = false) MultipartFile link) {
         try {
@@ -69,7 +72,19 @@ public class CvController extends GenericController<Cv, Integer> {
                     .body(new ExceptionResponse("An error occurred: " + e.getMessage()));
         }
     }
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getCvById(@PathVariable Integer id) {
+        try {
+            Cv cv = cvService.findOne(id);
+            return ResponseEntity.ok(cv);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Error: " + e.getMessage());
+        }
+    }
 
 
 
 }
+
+
