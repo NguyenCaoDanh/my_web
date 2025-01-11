@@ -1,6 +1,5 @@
 package com.danhcaonguyen.web.service.impl;
 
-import com.danhcaonguyen.web.dto.request.CvDTO;
 import com.danhcaonguyen.web.entity.Account;
 import com.danhcaonguyen.web.entity.Cv;
 import com.danhcaonguyen.web.exception.ErrorHandler;
@@ -67,17 +66,25 @@ public class CvServiceImpl  implements CvService {
             Account currentAccount = accountRepository.findByUsername(username)
                     .orElseThrow(() -> new ErrorHandler(HttpStatus.UNAUTHORIZED, "Account not found"));
 
-            // Kiểm tra nếu CV đã tồn tại
+            // Kiểm tra User
             if (currentAccount.getUser() == null) {
-                // Cập nhật thông tin CV
                 throw new ErrorHandler(HttpStatus.BAD_REQUEST, "User not associated with the account");
-
             }
-            return cvRepository.findById(id).get();
+
+            // Tìm CV theo ID và đảm bảo nó thuộc về User hiện tại
+            Cv cv = cvRepository.findById(id)
+                    .orElseThrow(() -> new ErrorHandler(HttpStatus.NOT_FOUND, "CV not found"));
+
+            if (!cv.getUser().equals(currentAccount.getUser())) {
+                throw new ErrorHandler(HttpStatus.FORBIDDEN, "Access denied");
+            }
+
+            return cv;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error while fetching CV: " + e.getMessage(), e);
         }
     }
+
 
 
 
@@ -93,9 +100,25 @@ public class CvServiceImpl  implements CvService {
         }    }
 
     @Override
-    public Page<Cv> findAllPage(Pageable pageable) {
-        return null;
+    public Page<Cv> findAll(Pageable pageable) {
+        try {
+            // Lấy tài khoản đang đăng nhập
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            Account currentAccount = accountRepository.findByUsername(username)
+                    .orElseThrow(() -> new ErrorHandler(HttpStatus.UNAUTHORIZED, "Account not found"));
+
+            // Kiểm tra User
+            if (currentAccount.getUser() == null) {
+                throw new ErrorHandler(HttpStatus.BAD_REQUEST, "User not associated with the account");
+            }
+
+            // Lấy danh sách CV của User đang đăng nhập với phân trang
+            return cvRepository.findByUser(currentAccount.getUser(), pageable);
+        } catch (Exception e) {
+            throw new RuntimeException("Error while fetching CVs: " + e.getMessage(), e);
+        }
     }
+
 
 
 }
