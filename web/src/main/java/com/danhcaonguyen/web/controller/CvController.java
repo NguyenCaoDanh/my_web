@@ -75,35 +75,46 @@ public class CvController {
         }
     }
 
-    @GetMapping("/my-cv/{id}")
+@GetMapping("/my-cv/{id}")
     public ResponseEntity<?> getCvById(@PathVariable Integer id) {
         try {
+            // Find the CV by ID
             Cv cv = cvService.findOne(id);
 
-            // Lấy đường dẫn file từ link của CV
+            // Construct the file path from the CV's link
             String filePath = System.getProperty("user.dir") + "/src/main/resources/static" + cv.getLink();
             Path path = Paths.get(filePath);
 
+            // Check if the file exists
             if (!Files.exists(path)) {
                 throw new ErrorHandler(HttpStatus.NOT_FOUND, "File not found");
             }
 
+            // Determine MIME type of the file
             String mimeType = Files.probeContentType(path);
             if (mimeType == null) {
-                mimeType = "application/octet-stream";
+                mimeType = "application/octet-stream";  // Default binary MIME type if unknown
             }
 
+            // Read file content into a byte array
             byte[] fileContent = Files.readAllBytes(path);
+
+            // Return the file with the appropriate headers to trigger download
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(mimeType))
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + path.getFileName() + "\"")
                     .body(fileContent);
+
         } catch (ErrorHandler e) {
+            // Handle known errors
             return ResponseEntity.status(e.getStatus()).body(createResponse(e.getMessage(), null));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(createResponse("An error occurred: " + e.getMessage(), null));
+            // Handle unexpected errors
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createResponse("An error occurred: " + e.getMessage(), null));
         }
     }
+
 
     @GetMapping("/all")
     public ResponseEntity<RequestResponse> getAllCvs(Pageable pageable) {
