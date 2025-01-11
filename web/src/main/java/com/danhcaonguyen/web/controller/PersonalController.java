@@ -8,6 +8,7 @@ import com.danhcaonguyen.web.exception.ExceptionResponse;
 import com.danhcaonguyen.web.generic.GenericController;
 import com.danhcaonguyen.web.generic.IService;
 import com.danhcaonguyen.web.repository.AccountRepository;
+import com.danhcaonguyen.web.service.GeneralService;
 import com.danhcaonguyen.web.service.PersonalService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,8 @@ public class PersonalController extends GenericController<User, Integer> {
     private PersonalService personalService;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private GeneralService generalService;
     @Override
     public IService<User, Integer> getService() {
         return personalService;
@@ -39,44 +42,17 @@ public class PersonalController extends GenericController<User, Integer> {
             @RequestParam("user") String userJson,
             @RequestParam(value = "avatar", required = false) MultipartFile avatar) {
         try {
-            // Parse JSON từ chuỗi
             ObjectMapper objectMapper = new ObjectMapper();
             User user = objectMapper.readValue(userJson, User.class);
 
-            // Xử lý upload avatar nếu có
+            Account currentAccount = generalService.getCurrentAccount();
+            User associatedUser = generalService.getAssociatedUser(currentAccount);
+
             if (avatar != null && !avatar.isEmpty()) {
-                String fileName = StringUtils.cleanPath(avatar.getOriginalFilename());
-
-                // Lấy tài khoản đang đăng nhập
-                String username = SecurityContextHolder.getContext().getAuthentication().getName();
-                Account currentAccount = accountRepository.findByUsername(username)
-                        .orElseThrow(() -> new ErrorHandler(HttpStatus.UNAUTHORIZED, "Account not found"));
-
-                if (currentAccount.getUser() == null) {
-                    throw new ErrorHandler(HttpStatus.BAD_REQUEST, "User not associated with the account");
-                }
-
-                // Lấy userId từ tài khoản
-                int userId = currentAccount.getUser().getIdUser();
-
-                // Đường dẫn lưu ảnh
-                String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/" + userId + "/images/";
-                Path uploadPath = Paths.get(uploadDir);
-
-                // Tạo thư mục nếu chưa tồn tại
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-
-                // Lưu file
-                Path filePath = uploadPath.resolve(fileName);
-                avatar.transferTo(filePath.toFile());
-
-                // Lưu đường dẫn file vào database
-                user.setAvatar("/" + userId + "/images/" + fileName);
+                String avatarPath = generalService.saveFile(avatar, associatedUser.getIdUser() + "/images/");
+                user.setAvatar(avatarPath);
             }
 
-            // Lưu hoặc cập nhật thông tin
             personalService.save(user);
             return ResponseEntity.ok(new RequestResponse("Personal information saved/updated successfully."));
         } catch (ErrorHandler e) {

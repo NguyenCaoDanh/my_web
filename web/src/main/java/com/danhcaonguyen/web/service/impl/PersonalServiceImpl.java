@@ -3,36 +3,31 @@ package com.danhcaonguyen.web.service.impl;
 import com.danhcaonguyen.web.entity.Account;
 import com.danhcaonguyen.web.entity.User;
 import com.danhcaonguyen.web.exception.ErrorHandler;
-import com.danhcaonguyen.web.repository.AccountRepository;
 import com.danhcaonguyen.web.repository.UserRepository;
+import com.danhcaonguyen.web.service.GeneralService;
 import com.danhcaonguyen.web.service.PersonalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import java.util.Iterator;
-import java.util.Optional;
 
 @Service
 public class PersonalServiceImpl implements PersonalService {
+
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private AccountRepository accountRepository;
+    private GeneralService generalService;
 
     @Override
     public void save(User user) {
         try {
-            // Lấy tài khoản đang đăng nhập
-            String username = SecurityContextHolder.getContext().getAuthentication().getName();
-            Account currentAccount = accountRepository.findByUsername(username)
-                    .orElseThrow(() -> new ErrorHandler(HttpStatus.UNAUTHORIZED, "Account not found"));
+            // Lấy tài khoản hiện tại
+            Account currentAccount = generalService.getCurrentAccount();
 
             // Kiểm tra nếu User đã tồn tại
             User existingUser = userRepository.findByAccount_IdAccount(currentAccount.getIdAccount());
-
             if (existingUser != null) {
                 // Cập nhật thông tin
                 existingUser.setFirstName(user.getFirstName());
@@ -70,6 +65,4 @@ public class PersonalServiceImpl implements PersonalService {
     public User findOne(Integer integer) {
         return null;
     }
-
-
 }

@@ -4,9 +4,11 @@ import com.danhcaonguyen.web.dto.response.CvResponse;
 import com.danhcaonguyen.web.dto.RequestResponse;
 import com.danhcaonguyen.web.entity.Account;
 import com.danhcaonguyen.web.entity.Cv;
+import com.danhcaonguyen.web.entity.User;
 import com.danhcaonguyen.web.exception.ErrorHandler;
 import com.danhcaonguyen.web.repository.AccountRepository;
 import com.danhcaonguyen.web.service.CvService;
+import com.danhcaonguyen.web.service.GeneralService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -37,54 +39,30 @@ public class CvController {
     private CvService cvService;
     @Autowired
     private AccountRepository accountRepository;
-
+    @Autowired
+    private GeneralService generalService;
     private RequestResponse createResponse(String message, Object data) {
         return new RequestResponse(LocalDateTime.now().toString(), message, data);
     }
+
 
     @PostMapping("/save")
     public ResponseEntity<RequestResponse> saveOrUpdatePersonalInfo(
             @RequestParam("name") String userJson,
             @RequestParam(value = "link", required = false) MultipartFile link) {
         try {
-            // Parse JSON từ chuỗi
             ObjectMapper objectMapper = new ObjectMapper();
             Cv cv = objectMapper.readValue(userJson, Cv.class);
 
-            // Lấy tài khoản đang đăng nhập
-            String username = SecurityContextHolder.getContext().getAuthentication().getName();
-            Account currentAccount = accountRepository.findByUsername(username)
-                    .orElseThrow(() -> new ErrorHandler(HttpStatus.UNAUTHORIZED, "Account not found"));
+            Account currentAccount = generalService.getCurrentAccount();
+            User user = generalService.getAssociatedUser(currentAccount);
 
-            if (currentAccount.getUser() == null) {
-                throw new ErrorHandler(HttpStatus.BAD_REQUEST, "User not associated with the account");
-            }
-
-            // Lấy userId từ tài khoản
-            int userId = currentAccount.getUser().getIdUser();
-
-            // Xử lý upload file nếu có
             if (link != null && !link.isEmpty()) {
-                String fileName = StringUtils.cleanPath(link.getOriginalFilename());
-                String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/" + userId + "/cv/";
-
-                Path uploadPath = Paths.get(uploadDir);
-
-                // Tạo thư mục nếu chưa tồn tại
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-
-                // Lưu file
-                Path filePath = uploadPath.resolve(fileName);
-                link.transferTo(filePath.toFile());
-
-                // Lưu đường dẫn file vào database
-                cv.setLink("/" + userId + "/cv/" + fileName);
+                String filePath = generalService.saveFile(link, user.getIdUser() + "/cv/");
+                cv.setLink(filePath);
             }
 
-            // Lưu hoặc cập nhật thông tin CV
-            cv.setUser(currentAccount.getUser());
+            cv.setUser(user);
             cvService.save(cv);
 
             return ResponseEntity.ok(createResponse("CV information saved/updated successfully.", null));
@@ -100,38 +78,29 @@ public class CvController {
     @GetMapping("/my-cv/{id}")
     public ResponseEntity<?> getCvById(@PathVariable Integer id) {
         try {
-            // Find the CV by ID
+            // Tìm CV theo ID
             Cv cv = cvService.findOne(id);
 
-            // Construct the file path from the CV's link
-            String filePath = System.getProperty("user.dir") + "/src/main/resources/static" + cv.getLink();
-            Path path = Paths.get(filePath);
+            // Lấy đường dẫn đầy đủ từ link
+            Path filePath = generalService.getFullPathFromLink(cv.getLink());
 
-            // Check if the file exists
-            if (!Files.exists(path)) {
-                throw new ErrorHandler(HttpStatus.NOT_FOUND, "File not found");
-            }
+            // Kiểm tra file tồn tại
+            generalService.validateFileExists(filePath);
 
-            // Determine MIME type of the file
-            String mimeType = Files.probeContentType(path);
-            if (mimeType == null) {
-                mimeType = "application/octet-stream";  // Default binary MIME type if unknown
-            }
+            // Lấy dữ liệu file
+            GeneralService.FileData fileData = generalService.getFileData(filePath);
 
-            // Read file content into a byte array
-            byte[] fileContent = Files.readAllBytes(path);
-
-            // Return the file with the appropriate headers to trigger download
+            // Trả về file với header phù hợp
             return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(mimeType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + path.getFileName() + "\"")
-                    .body(fileContent);
+                    .contentType(MediaType.parseMediaType(fileData.getMimeType()))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileData.getFileName() + "\"")
+                    .body(fileData.getContent());
 
         } catch (ErrorHandler e) {
-            // Handle known errors
+            // Xử lý lỗi đã biết
             return ResponseEntity.status(e.getStatus()).body(createResponse(e.getMessage(), null));
         } catch (Exception e) {
-            // Handle unexpected errors
+            // Xử lý lỗi không mong muốn
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(createResponse("An error occurred: " + e.getMessage(), null));
         }
