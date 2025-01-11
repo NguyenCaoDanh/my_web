@@ -1,11 +1,13 @@
 package com.danhcaonguyen.web.controller;
 
 import com.danhcaonguyen.web.dto.RequestResponse;
+import com.danhcaonguyen.web.entity.Account;
 import com.danhcaonguyen.web.entity.User;
 import com.danhcaonguyen.web.exception.ErrorHandler;
 import com.danhcaonguyen.web.exception.ExceptionResponse;
 import com.danhcaonguyen.web.generic.GenericController;
 import com.danhcaonguyen.web.generic.IService;
+import com.danhcaonguyen.web.repository.AccountRepository;
 import com.danhcaonguyen.web.service.PersonalService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +27,8 @@ import java.nio.file.Paths;
 public class PersonalController extends GenericController<User, Integer> {
     @Autowired
     private PersonalService personalService;
-
+    @Autowired
+    private AccountRepository accountRepository;
     @Override
     public IService<User, Integer> getService() {
         return personalService;
@@ -43,8 +46,21 @@ public class PersonalController extends GenericController<User, Integer> {
             // Xử lý upload avatar nếu có
             if (avatar != null && !avatar.isEmpty()) {
                 String fileName = StringUtils.cleanPath(avatar.getOriginalFilename());
-                String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/images/";
 
+                // Lấy tài khoản đang đăng nhập
+                String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                Account currentAccount = accountRepository.findByUsername(username)
+                        .orElseThrow(() -> new ErrorHandler(HttpStatus.UNAUTHORIZED, "Account not found"));
+
+                if (currentAccount.getUser() == null) {
+                    throw new ErrorHandler(HttpStatus.BAD_REQUEST, "User not associated with the account");
+                }
+
+                // Lấy userId từ tài khoản
+                int userId = currentAccount.getUser().getIdUser();
+
+                // Đường dẫn lưu ảnh
+                String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/" + userId + "/images/";
                 Path uploadPath = Paths.get(uploadDir);
 
                 // Tạo thư mục nếu chưa tồn tại
@@ -57,7 +73,7 @@ public class PersonalController extends GenericController<User, Integer> {
                 avatar.transferTo(filePath.toFile());
 
                 // Lưu đường dẫn file vào database
-                user.setAvatar("/images/" + fileName);
+                user.setAvatar("/" + userId + "/images/" + fileName);
             }
 
             // Lưu hoặc cập nhật thông tin
@@ -71,6 +87,7 @@ public class PersonalController extends GenericController<User, Integer> {
                     .body(new ExceptionResponse("An error occurred: " + e.getMessage()));
         }
     }
+
 
     @GetMapping("/current")
     public ResponseEntity<?> getCurrentPersonalInfo() {

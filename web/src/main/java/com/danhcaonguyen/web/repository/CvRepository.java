@@ -13,4 +13,5 @@ import java.util.Optional;
 @Repository
 public interface CvRepository extends IRepository<Cv,Integer> {
     Page<Cv> findByUser(User user, Pageable pageable);
+
 }
