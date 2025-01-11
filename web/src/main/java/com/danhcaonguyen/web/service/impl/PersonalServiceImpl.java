@@ -9,60 +9,82 @@ import com.danhcaonguyen.web.service.PersonalService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
 import java.util.Iterator;
 
 @Service
 public class PersonalServiceImpl implements PersonalService {
 
     @Autowired
-    private UserRepository userRepository;
+    private UserRepository userRepository; // Repository thao tác với bảng User
 
     @Autowired
-    private GeneralService generalService;
+    private GeneralService generalService; // Dịch vụ chung hỗ trợ các tác vụ khác
 
     @Override
     public void save(User user) {
         try {
-            // Lấy tài khoản hiện tại
+            // Lấy tài khoản hiện tại từ SecurityContext
             Account currentAccount = generalService.getCurrentAccount();
 
-            // Kiểm tra nếu User đã tồn tại
+            // Kiểm tra xem tài khoản hiện tại đã liên kết với User chưa
             User existingUser = userRepository.findByAccount_IdAccount(currentAccount.getIdAccount());
+
             if (existingUser != null) {
-                // Cập nhật thông tin
-                existingUser.setFirstName(user.getFirstName());
-                existingUser.setLastName(user.getLastName());
-                existingUser.setMiddleName(user.getMiddleName());
-                existingUser.setEmail(user.getEmail());
-                existingUser.setPhone(user.getPhone());
-                existingUser.setAddress(user.getAddress());
-                existingUser.setGithub(user.getGithub());
-                existingUser.setFacebook(user.getFacebook());
-                existingUser.setZalo(user.getZalo());
-                existingUser.setAvatar(user.getAvatar());
+                // Nếu User đã tồn tại, cập nhật thông tin
+                existingUser.setFirstName(user.getFirstName()); // Cập nhật tên
+                existingUser.setLastName(user.getLastName());   // Cập nhật họ
+                existingUser.setMiddleName(user.getMiddleName()); // Cập nhật tên đệm
+                existingUser.setEmail(user.getEmail());         // Cập nhật email
+                existingUser.setPhone(user.getPhone());         // Cập nhật số điện thoại
+                existingUser.setAddress(user.getAddress());     // Cập nhật địa chỉ
+                existingUser.setGithub(user.getGithub());       // Cập nhật GitHub
+                existingUser.setFacebook(user.getFacebook());   // Cập nhật Facebook
+                existingUser.setZalo(user.getZalo());           // Cập nhật Zalo
+                existingUser.setAvatar(user.getAvatar());       // Cập nhật avatar
+
+                // Lưu User đã được cập nhật vào cơ sở dữ liệu
                 userRepository.save(existingUser);
             } else {
-                // Tạo mới nếu chưa có
+                // Nếu User chưa tồn tại, liên kết với tài khoản hiện tại và tạo mới
                 user.setAccount(currentAccount);
-                userRepository.save(user);
+                userRepository.save(user); // Lưu User mới vào cơ sở dữ liệu
             }
         } catch (Exception e) {
-            throw new ErrorHandler(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+            // Xử lý ngoại lệ và ném ra thông báo lỗi
+            throw new ErrorHandler(HttpStatus.INTERNAL_SERVER_ERROR, "Error while saving User: " + e.getMessage());
         }
     }
 
     @Override
     public void delete(Integer integer) {
-        // Implementation nếu cần thiết
+        // Chưa triển khai, có thể thêm logic xóa User nếu cần
     }
 
     @Override
     public Iterator<User> findAll() {
+        // Chưa triển khai, có thể thêm logic lấy tất cả User nếu cần
         return null;
     }
 
     @Override
     public User findOne(Integer integer) {
-        return null;
+        try {
+            // Lấy tài khoản hiện tại từ SecurityContext
+            Account currentAccount = generalService.getCurrentAccount();
+
+            // Tìm kiếm User liên kết với tài khoản hiện tại
+            User user = userRepository.findByAccount_IdAccount(currentAccount.getIdAccount());
+
+            // Nếu không tìm thấy User, ném ngoại lệ
+            if (user == null) {
+                throw new ErrorHandler(HttpStatus.NOT_FOUND, "User not found for the current account.");
+            }
+
+            return user;
+        } catch (Exception e) {
+            // Xử lý ngoại lệ và ném ra thông báo lỗi
+            throw new ErrorHandler(HttpStatus.INTERNAL_SERVER_ERROR, "Error while fetching User: " + e.getMessage());
+        }
     }
 }

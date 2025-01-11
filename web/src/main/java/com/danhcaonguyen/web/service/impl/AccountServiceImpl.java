@@ -2,6 +2,7 @@ package com.danhcaonguyen.web.service.impl;
 
 import com.danhcaonguyen.web.entity.Account;
 import com.danhcaonguyen.web.entity.Role;
+import com.danhcaonguyen.web.entity.User;
 import com.danhcaonguyen.web.exception.ErrorHandler;
 import com.danhcaonguyen.web.generic.IRepository;
 import com.danhcaonguyen.web.repository.AccountRepository;
@@ -32,18 +33,27 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public void save(Account account) {
         try {
+            // Kiểm tra username đã tồn tại
             if (accountRepository.findByUsername(account.getUsername()).isPresent()) {
                 throw new ErrorHandler(HttpStatus.BAD_REQUEST, "Username already exists.");
             }
-            // Gọi validate password từ GeneralService
+
+            // Validate mật khẩu
             generalService.validatePassword(account.getPassword());
 
+            // Gán vai trò mặc định
             Role role = roleRepository.findById(1)
                     .orElseThrow(() -> new ErrorHandler(HttpStatus.BAD_REQUEST, "Role with ID 1 not found"));
 
             account.setRole(role);
             account.setPassword(passwordEncoder.encode(account.getPassword()));
 
+            // Tạo User và liên kết với Account
+            User user = new User();
+            user.setAccount(account); // Gắn tài khoản vào User
+            account.setUser(user); // Gắn User vào tài khoản
+
+            // Lưu tài khoản (cascade sẽ tự lưu User)
             accountRepository.save(account);
         } catch (Exception e) {
             throw new ErrorHandler(HttpStatus.BAD_REQUEST, e.getMessage());
