@@ -12,6 +12,4 @@ public interface CvService extends IService <Cv, Integer> {
     Optional<Cv> update(Integer id);
     Page<Cv> findAllPage(Pageable pageable);
 
-
-
 }

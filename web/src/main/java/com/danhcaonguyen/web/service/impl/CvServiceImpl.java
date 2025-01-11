@@ -1,26 +1,19 @@
 package com.danhcaonguyen.web.service.impl;
 
+import com.danhcaonguyen.web.dto.request.CvDTO;
 import com.danhcaonguyen.web.entity.Account;
 import com.danhcaonguyen.web.entity.Cv;
-import com.danhcaonguyen.web.entity.User;
 import com.danhcaonguyen.web.exception.ErrorHandler;
 import com.danhcaonguyen.web.repository.AccountRepository;
 import com.danhcaonguyen.web.repository.CvRepository;
-import com.danhcaonguyen.web.repository.UserRepository;
 import com.danhcaonguyen.web.service.CvService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.Optional;
 
@@ -85,6 +78,7 @@ public class CvServiceImpl  implements CvService {
             throw new RuntimeException(e);
         }
     }
+
 
 
     @Override

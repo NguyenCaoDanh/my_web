@@ -1,5 +1,4 @@
 package com.danhcaonguyen.web.controller;
-
 import com.danhcaonguyen.web.exception.ErrorHandler;
 
 import com.danhcaonguyen.web.dto.RequestResponse;
@@ -26,17 +25,14 @@ import java.time.LocalDateTime;
 public class CvController extends GenericController<Cv, Integer> {
     @Autowired
     private CvService cvService;
-
     @Override
-    public IService<Cv, Integer> getService() {
+    public IService<Cv,Integer> getService() {
         return cvService;
     }
-
     private RequestResponse createResponse(String message, Object data) {
         return new RequestResponse(LocalDateTime.now().toString(), message, data);
     }
-
-    @PostMapping("/save")
+     @PostMapping("/save")
     public ResponseEntity<?> saveOrUpdatePersonalInfo(
 
             @RequestParam("name") String userJson,
@@ -76,8 +72,6 @@ public class CvController extends GenericController<Cv, Integer> {
                     .body(new ExceptionResponse("An error occurred: " + e.getMessage()));
         }
     }
-
-
     @GetMapping("my-cv/{id}")
     public ResponseEntity<?> getCvById1(@PathVariable Integer id) {
         try {
@@ -88,7 +82,6 @@ public class CvController extends GenericController<Cv, Integer> {
                     .body("Error: " + e.getMessage());
         }
     }
-
 
 }
 
