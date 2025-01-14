@@ -1,6 +1,7 @@
 package com.danhcaonguyen.web.controller;
 
 import com.danhcaonguyen.web.dto.RequestResponse;
+import com.danhcaonguyen.web.dto.response.ActivityResponse;
 import com.danhcaonguyen.web.entity.Activities;
 import com.danhcaonguyen.web.service.ActivityService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,13 +63,11 @@ public class ActivityController {
      * @return ResponseEntity containing the activity details.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<RequestResponse> getActivity(@PathVariable Integer id) {
-        Activities activity = activityService.findOne(id);
-        if (activity == null) {
-            return ResponseEntity.notFound().build(); // Handle case where activity is not found
-        }
-        return ResponseEntity.ok(new RequestResponse(activity));
+    public ResponseEntity<ActivityResponse> getActivity(@PathVariable Integer id) {
+        ActivityResponse activityResponse = activityService.findById(id);
+        return ResponseEntity.ok(activityResponse);
     }
+
 
     /**
      * Endpoint to delete an activity by ID.
@@ -87,8 +86,24 @@ public class ActivityController {
      * @return ResponseEntity containing a paginated list of activities.
      */
     @GetMapping
-    public ResponseEntity<RequestResponse> getAllActivities(Pageable pageable) {
-        Page<Activities> activities = activityService.findAll(pageable);
-        return ResponseEntity.ok(new RequestResponse(activities));
+    public ResponseEntity<Page<ActivityResponse>> getAllActivities(Pageable pageable) {
+        // Fetch all activities with pagination
+        Page<Activities> activitiesPage = activityService.findAll(pageable);
+
+        // Map each Activities entity to an ActivityResponse DTO
+        Page<ActivityResponse> responsePage = activitiesPage.map(activity -> {
+            ActivityResponse response = new ActivityResponse();
+            response.setTitle(activity.getTitle());
+            response.setDescription(activity.getDescription());
+
+            // Add the path for the getById endpoint
+            response.setPath("/api/activities/" + activity.getIdActivities());
+            return response;
+        });
+
+        // Return the paginated response
+        return ResponseEntity.ok(responsePage);
     }
+
+
 }

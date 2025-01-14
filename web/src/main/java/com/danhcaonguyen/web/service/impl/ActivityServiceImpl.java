@@ -1,5 +1,6 @@
 package com.danhcaonguyen.web.service.impl;
 
+import com.danhcaonguyen.web.dto.response.ActivityResponse;
 import com.danhcaonguyen.web.entity.Account;
 import com.danhcaonguyen.web.entity.Activities;
 import com.danhcaonguyen.web.entity.User;
@@ -22,6 +23,7 @@ public class ActivityServiceImpl implements ActivityService {
     private ActivitiesRepository activitiesRepository;
     @Autowired
     private GeneralService generalService; // Dịch vụ chung cung cấp các chức năng hỗ trợ
+
     @Override
     public void save(Activities activities) {
         try {
@@ -85,6 +87,9 @@ public class ActivityServiceImpl implements ActivityService {
             if (!activities.getUser().equals(currentUser)) {
                 throw new ErrorHandler(HttpStatus.FORBIDDEN, "Access denied");
             }
+            ActivityResponse response = new ActivityResponse();
+            response.setTitle(activities.getTitle());
+            response.setDescription(activities.getDescription());
 
             return activities; // Trả về CV tìm được
         } catch (Exception e) {
@@ -124,6 +129,34 @@ public class ActivityServiceImpl implements ActivityService {
         } catch (Exception e) {
             // Xử lý lỗi trong quá trình lấy danh sách CV
             throw new RuntimeException("Error while fetching Activities: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public ActivityResponse findById(Integer id) {
+        try {
+            // Lấy tài khoản hiện tại từ SecurityContext
+            Account currentAccount = generalService.getCurrentAccount();
+            // Kiểm tra tài khoản có liên kết với User hay không
+            User currentUser = generalService.getAssociatedUser(currentAccount);
+
+            // Tìm CV theo ID
+            Activities activities = activitiesRepository.findById(id)
+                    .orElseThrow(() -> new ErrorHandler(HttpStatus.NOT_FOUND, "Activity not found"));
+
+            // Kiểm tra CV có thuộc về User hiện tại không
+            if (!activities.getUser().equals(currentUser)) {
+                throw new ErrorHandler(HttpStatus.FORBIDDEN, "Access denied");
+            }
+
+            // Map Activities to ActivityResponse
+            ActivityResponse response = new ActivityResponse();
+            response.setTitle(activities.getTitle());
+            response.setDescription(activities.getDescription());
+            return response; // Return the DTO
+        } catch (Exception e) {
+            // Handle any exceptions
+            throw new RuntimeException("Error while fetching Activity: " + e.getMessage(), e);
         }
     }
 }
