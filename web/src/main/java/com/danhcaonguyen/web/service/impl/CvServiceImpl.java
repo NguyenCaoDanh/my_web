@@ -1,5 +1,6 @@
 package com.danhcaonguyen.web.service.impl;
 
+import com.danhcaonguyen.web.dto.response.CvResponse;
 import com.danhcaonguyen.web.entity.Account;
 import com.danhcaonguyen.web.entity.Cv;
 import com.danhcaonguyen.web.exception.ErrorHandler;
@@ -85,19 +86,49 @@ public class CvServiceImpl  implements CvService {
         }
     }
 
-
+//    @Override
+//    public Optional<Cv> findById(Integer id) {
+//        return Optional.empty();
+//    }
 
 
     @Override
-    public Optional<Cv> update(Integer id) {
+    public Optional<CvResponse> update(Integer id, String newCvName) {
         try {
-            Cv cv = cvRepository.findById(id).get();
-            cv.setCvName(cv.getCvName());
+            // Lấy tài khoản đang đăng nhập
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            Account currentAccount = accountRepository.findByUsername(username)
+                    .orElseThrow(() -> new ErrorHandler(HttpStatus.UNAUTHORIZED, "Account not found"));
+
+            // Kiểm tra User
+            if (currentAccount.getUser() == null) {
+                throw new ErrorHandler(HttpStatus.BAD_REQUEST, "User not associated with the account");
+            }
+
+            // Tìm CV theo ID và đảm bảo nó thuộc về User hiện tại
+            Cv cv = cvRepository.findById(id)
+                    .orElseThrow(() -> new ErrorHandler(HttpStatus.NOT_FOUND, "CV not found"));
+
+            if (!cv.getUser().equals(currentAccount.getUser())) {
+                throw new ErrorHandler(HttpStatus.FORBIDDEN, "Access denied");
+            }
+
+            // Cập nhật thông tin CV
+            cv.setCvName(newCvName);
+            String link = "";
+            cv.setLink(link);
             cvRepository.save(cv);
-            return Optional.of(cv);
+
+            // Chuyển đổi đối tượng Cv thành CvResponse
+            CvResponse responseDto = new CvResponse(cv.getCvName(), cv.getLink());
+            return Optional.of(responseDto);
+
+        } catch (ErrorHandler e) {
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException(e);
-        }    }
+            throw new RuntimeException("Error while updating CV: " + e.getMessage(), e);
+        }
+    }
 
     @Override
     public Page<Cv> findAll(Pageable pageable) {
@@ -118,7 +149,5 @@ public class CvServiceImpl  implements CvService {
             throw new RuntimeException("Error while fetching CVs: " + e.getMessage(), e);
         }
     }
-
-
 
 }

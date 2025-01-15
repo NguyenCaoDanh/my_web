@@ -1,6 +1,7 @@
 package com.danhcaonguyen.web.service.impl;
 
 import com.danhcaonguyen.web.entity.Account;
+import com.danhcaonguyen.web.entity.Cv;
 import com.danhcaonguyen.web.entity.User;
 import com.danhcaonguyen.web.exception.ErrorHandler;
 import com.danhcaonguyen.web.repository.AccountRepository;
@@ -70,6 +71,11 @@ public class PersonalServiceImpl implements PersonalService {
     public User findOne(Integer integer) {
         return null;
     }
+
+//    @Override
+//    public Optional<Cv> findById(Integer id) {
+//        return Optional.empty();
+//    }
 
 
 }

@@ -1,5 +1,4 @@
 package com.danhcaonguyen.web.controller;
-
 import com.danhcaonguyen.web.dto.response.CvResponse;
 import com.danhcaonguyen.web.dto.RequestResponse;
 import com.danhcaonguyen.web.entity.Cv;
@@ -23,7 +22,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -129,4 +131,88 @@ public class CvController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(createResponse("An error occurred: " + e.getMessage(), null));
         }
     }
+
+//    @PutMapping("/update/{id}")
+//    public ResponseEntity<?> updateCategory(@PathVariable Integer id, @RequestBody Cv updateCv) {
+//        try {
+//            // Gọi service để cập nhật CV và nhận về DTO
+//            Optional<CvResponse> updatedCv = cvService.update(id, updateCv.getCvName());
+//            if (updatedCv.isPresent()) {
+//                // Trả về phản hồi JSON chỉ chứa thông tin từ CvResponse
+//                return ResponseEntity.ok(createResponse("CV updated successfully!", updatedCv.get()));
+//            } else {
+//                // Nếu không tìm thấy CV
+//                throw new ErrorHandler(HttpStatus.NOT_FOUND, "CV not found");
+//            }
+//        } catch (ErrorHandler e) {
+//            // Xử lý lỗi tùy chỉnh
+//            return ResponseEntity.status(e.getStatus()).body(createErrorResponse(e.getMessage()));
+//        } catch (Exception e) {
+//            // Xử lý lỗi không mong muốn
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(createErrorResponse("Failed to update CV: " + e.getMessage()));
+//        }
+//    }
+//
+//
+//    private Map<String, Object> createErrorResponse(String errorMessage) {
+//        Map<String, Object> response = new HashMap<>();
+//        response.put("status", "error");
+//        response.put("timestamp", LocalDateTime.now());
+//        response.put("message", errorMessage);
+//        return response;
+//    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<RequestResponse> updateCv(
+            @PathVariable("id") Integer id,
+            @RequestParam("cvName") String cvName, // Nhận cvName từ form-data
+            @RequestParam(value = "link", required = false) MultipartFile link) { // Nhận file link từ form-data
+        try {
+            // Lấy CV từ database
+            Optional<Cv> existingCvOptional = Optional.ofNullable(cvService.findOne(id));
+            if (existingCvOptional.isEmpty()) {
+                throw new ErrorHandler(HttpStatus.NOT_FOUND, "CV not found with ID: " + id);
+            }
+
+            Cv existingCv = existingCvOptional.get();
+
+            // Cập nhật cvName
+            existingCv.setCvName(cvName);
+
+            // Xử lý file nếu được gửi
+            if (link != null && !link.isEmpty()) {
+                String fileName = StringUtils.cleanPath(link.getOriginalFilename());
+                String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/cv/";
+
+                Path uploadPath = Paths.get(uploadDir);
+
+                // Tạo thư mục nếu chưa tồn tại
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+
+                // Lưu file
+                Path filePath = uploadPath.resolve(fileName);
+                link.transferTo(filePath.toFile());
+
+                // Cập nhật đường dẫn file
+                existingCv.setLink("/cv/" + fileName);
+            }
+
+            // Lưu cập nhật vào database
+            cvService.save(existingCv);
+
+            return ResponseEntity.ok(createResponse("CV updated successfully.", null));
+        } catch (ErrorHandler e) {
+            return ResponseEntity.status(e.getStatus()).body(createResponse(e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(createResponse("An error occurred: " + e.getMessage(), null));
+        }
+    }
+
 }
+
+
+
+

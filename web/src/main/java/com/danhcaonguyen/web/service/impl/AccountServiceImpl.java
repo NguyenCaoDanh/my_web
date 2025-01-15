@@ -1,6 +1,7 @@
 package com.danhcaonguyen.web.service.impl;
 
 import com.danhcaonguyen.web.entity.Account;
+import com.danhcaonguyen.web.entity.Cv;
 import com.danhcaonguyen.web.entity.Role;
 import com.danhcaonguyen.web.exception.ErrorHandler;
 import com.danhcaonguyen.web.generic.IRepository;
@@ -66,6 +67,11 @@ public class AccountServiceImpl implements AccountService {
     public Account findOne(Integer integer) {
         return null;
     }
+
+//    @Override
+//    public Optional<Cv> findById(Integer id) {
+//        return Optional.empty();
+//    }
 
 
     @Override
