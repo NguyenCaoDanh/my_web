@@ -21,32 +21,46 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/account")
 public class AccountController extends GenericController<Account, Integer> {
-    @Autowired
-    private AccountService accountService;
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private JwtService jwtService;
 
+    @Autowired
+    private AccountService accountService; // Service để xử lý logic liên quan đến tài khoản
+
+    @Autowired
+    private AuthenticationManager authenticationManager; // Quản lý xác thực
+
+    @Autowired
+    private JwtService jwtService; // Dịch vụ tạo và xử lý JWT token
+
+    /**
+     * Cung cấp service cho lớp cha GenericController.
+     *
+     * @return Service của Account.
+     */
     @Override
     public IService<Account, Integer> getService() {
         return accountService;
     }
 
+    /**
+     * Xử lý đăng nhập người dùng.
+     *
+     * @param loginDTO Thông tin đăng nhập bao gồm username và password.
+     * @return Phản hồi chứa JWT token nếu đăng nhập thành công, hoặc thông báo lỗi.
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
         try {
+            // Xác thực thông tin đăng nhập
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginDTO.getUsername(),
                             loginDTO.getPassword()));
 
+            // Nếu xác thực thành công, tạo token và trả về
             if (authentication.isAuthenticated()) {
-                return ResponseEntity
-                        .status(HttpStatus.OK)
-                        .body(
-                                new RequestResponse(
-                                        new Token(jwtService.generateToken(loginDTO.getUsername()))));
+                String token = jwtService.generateToken(loginDTO.getUsername());
+                return ResponseEntity.status(HttpStatus.OK)
+                        .body(new RequestResponse(new Token(token)));
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(new ExceptionResponse("Invalid username or password"));
@@ -75,18 +89,22 @@ public class AccountController extends GenericController<Account, Integer> {
         }
     }
 
+    /**
+     * Xử lý đăng ký tài khoản mới.
+     *
+     * @param account Thông tin tài khoản cần đăng ký.
+     * @return Phản hồi xác nhận đăng ký thành công hoặc thông báo lỗi.
+     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody Account account) {
         try {
+            // Lưu tài khoản mới
             accountService.save(account);
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
+            return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new RequestResponse("Account registered successfully."));
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(new ExceptionResponse(e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ExceptionResponse("An error occurred: " + e.getMessage()));
         }
     }
-
 }
