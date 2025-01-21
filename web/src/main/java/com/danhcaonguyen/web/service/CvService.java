@@ -12,7 +12,7 @@ import java.util.Optional;
 public interface CvService extends IService<Cv, Integer> {
 
     //    Optional<CvResponse> update(Integer id, String newCvName, String link);
-    Optional<Cv> update(Integer id);
+    public Optional<Cv> update(Integer id, String newName, MultipartFile newFile);
 
     Page<Cv> findAll(Pageable pageable);
 

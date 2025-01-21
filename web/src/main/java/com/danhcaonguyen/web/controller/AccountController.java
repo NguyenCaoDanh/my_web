@@ -20,6 +20,8 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/account")
+@CrossOrigin
+
 public class AccountController extends GenericController<Account, Integer> {
 
     @Autowired
@@ -47,6 +49,7 @@ public class AccountController extends GenericController<Account, Integer> {
      * @param loginDTO Thông tin đăng nhập bao gồm username và password.
      * @return Phản hồi chứa JWT token nếu đăng nhập thành công, hoặc thông báo lỗi.
      */
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDTO loginDTO) {
         try {

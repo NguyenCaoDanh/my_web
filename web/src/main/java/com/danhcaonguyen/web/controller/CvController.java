@@ -133,46 +133,46 @@ public class CvController {
         }
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<RequestResponse> saveOrUpdatePersonalInfo(
-            @PathVariable Integer id,
-            @RequestParam("name") String userJson,
-            @RequestParam(value = "link", required = false) MultipartFile link) {
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            Cv cv = objectMapper.readValue(userJson, Cv.class);
-
-            Account currentAccount = generalService.getCurrentAccount();
-            User user = generalService.getAssociatedUser(currentAccount);
-
-            Cv existingCv = cvService.getById(id)
-                    .orElseThrow(() -> new ErrorHandler(HttpStatus.NOT_FOUND, "CV not found"));
-
-            if (!existingCv.getUser().equals(user)) {
-                throw new ErrorHandler(HttpStatus.FORBIDDEN, "Access denied");
-            }
-
-            if (link != null && !link.isEmpty()) {
-                String filePath = generalService.saveFile(link, user.getIdUser() + "/cv/");
-                cv.setLink(filePath);
-            } else {
-                cv.setLink(existingCv.getLink());
-            }
-
-            cv.setUser(user);
-            cvService.update(id);
-
-            return ResponseEntity.ok(createResponse("CV information saved/updated successfully.", null));
-        } catch (ErrorHandler e) {
-            return ResponseEntity.status(e.getStatus()).body(createResponse(e.getMessage(), null));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(createResponse("An error occurred: " + e.getMessage(), null));
-        }
-    }
-
-
-    @DeleteMapping("/{cvId}")
+//    @PutMapping("/update/{id}")
+//    public ResponseEntity<RequestResponse> saveOrUpdatePersonalInfo(
+//            @PathVariable Integer id,
+//            @RequestParam("name") String userJson,
+//            @RequestParam(value = "link", required = false) MultipartFile link) {
+//        try {
+//            ObjectMapper objectMapper = new ObjectMapper();
+//            Cv cv = objectMapper.readValue(userJson, Cv.class);
+//
+//            Account currentAccount = generalService.getCurrentAccount();
+//            User user = generalService.getAssociatedUser(currentAccount);
+//
+//            Cv existingCv = cvService.getById(id)
+//                    .orElseThrow(() -> new ErrorHandler(HttpStatus.NOT_FOUND, "CV not found"));
+//
+//            if (!existingCv.getUser().equals(user)) {
+//                throw new ErrorHandler(HttpStatus.FORBIDDEN, "Access denied");
+//            }
+//
+//            if (link != null && !link.isEmpty()) {
+//                String filePath = generalService.saveFile(link, user.getIdUser() + "/cv/");
+//                cv.setLink(filePath);
+//            } else {
+//                cv.setLink(existingCv.getLink());
+//            }
+//
+//            cv.setUser(user);
+//            cvService.update(id);
+//
+//            return ResponseEntity.ok(createResponse("CV information saved/updated successfully.", null));
+//        } catch (ErrorHandler e) {
+//            return ResponseEntity.status(e.getStatus()).body(createResponse(e.getMessage(), null));
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                    .body(createResponse("An error occurred: " + e.getMessage(), null));
+//        }
+//    }
+//
+//
+    @DeleteMapping("delete/{cvId}")
     public ResponseEntity<String> deleteCv(@PathVariable Integer cvId) {
         try {
             // Gọi service để thực hiện xóa CV
@@ -186,6 +186,35 @@ public class CvController {
             return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
         }
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<RequestResponse> saveOrUpdatePersonalInfo(
+            @PathVariable Integer id,
+            @RequestParam("name") String cvName,
+            @RequestParam(value = "link", required = false) MultipartFile link) {
+        try {
+            Account currentAccount = generalService.getCurrentAccount();
+            User user = generalService.getAssociatedUser(currentAccount);
+
+            Cv existingCv = cvService.getById(id)
+                    .orElseThrow(() -> new ErrorHandler(HttpStatus.NOT_FOUND, "CV not found"));
+
+            if (!existingCv.getUser().equals(user)) {
+                throw new ErrorHandler(HttpStatus.FORBIDDEN, "Access denied");
+            }
+
+            // Gọi update với thông tin mới
+            cvService.update(id, cvName, link);
+
+            return ResponseEntity.ok(createResponse("CV information saved/updated successfully.", null));
+        } catch (ErrorHandler e) {
+            return ResponseEntity.status(e.getStatus()).body(createResponse(e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createResponse("An error occurred: " + e.getMessage(), null));
+        }
+    }
+
 
 }
 

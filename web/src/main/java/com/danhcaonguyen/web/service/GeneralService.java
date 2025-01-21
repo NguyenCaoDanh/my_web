@@ -44,25 +44,25 @@ public class GeneralService {
     }
 
     // Lưu file vào thư mục chỉ định
-    public String saveFile(MultipartFile file, String subDirectory) throws IOException, java.io.IOException {
-        // Lấy tên file và làm sạch tên file
-        String fileName = StringUtils.cleanPath(file.getOriginalFilename());
-        // Xác định thư mục upload
-        String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/" + subDirectory;
-
-        // Tạo thư mục nếu chưa tồn tại
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        // Xác định đường dẫn đầy đủ của file
-        Path filePath = uploadPath.resolve(fileName);
-        // Lưu file vào thư mục
-        file.transferTo(filePath.toFile());
-        // Trả về đường dẫn tương đối của file
-        return "/" + subDirectory + fileName;
-    }
+//    public String saveFile(MultipartFile file, String subDirectory) throws IOException, java.io.IOException {
+//        // Lấy tên file và làm sạch tên file
+//        String fileName = StringUtils.cleanPath(file.getOriginalFilename());
+//        // Xác định thư mục upload
+//        String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/" + subDirectory;
+//
+//        // Tạo thư mục nếu chưa tồn tại
+//        Path uploadPath = Paths.get(uploadDir);
+//        if (!Files.exists(uploadPath)) {
+//            Files.createDirectories(uploadPath);
+//        }
+//
+//        // Xác định đường dẫn đầy đủ của file
+//        Path filePath = uploadPath.resolve(fileName);
+//        // Lưu file vào thư mục
+//        file.transferTo(filePath.toFile());
+//        // Trả về đường dẫn tương đối của file
+//        return "/" + subDirectory + fileName;
+//    }
 
     // Xác thực mật khẩu dựa trên các quy tắc bảo mật
     public void validatePassword(String password) {
@@ -162,22 +162,22 @@ public class GeneralService {
         }
     }
     // Save file into the specified directory
-    public String saveFile1(MultipartFile file, String subDirectory) throws IOException, java.io.IOException {
-        String fileName = StringUtils.cleanPath(file.getOriginalFilename());
-        String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/" + subDirectory;
-
-        Path uploadPath = Paths.get(uploadDir);
-        // Ensure directory exists
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
-        Path filePath = uploadPath.resolve(fileName);
-        // Overwrite existing file
-        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-        return "/" + subDirectory + fileName;
-    }
+//    public String saveFile1(MultipartFile file, String subDirectory) throws IOException, java.io.IOException {
+//        String fileName = StringUtils.cleanPath(file.getOriginalFilename());
+//        String uploadDir = System.getProperty("user.dir") + "/src/main/resources/static/" + subDirectory;
+//
+//        Path uploadPath = Paths.get(uploadDir);
+//        // Ensure directory exists
+//        if (!Files.exists(uploadPath)) {
+//            Files.createDirectories(uploadPath);
+//        }
+//
+//        Path filePath = uploadPath.resolve(fileName);
+//        // Overwrite existing file
+//        Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+//
+//        return "/" + subDirectory + fileName;
+//    }
 
     // Delete file if it exists
     public void deleteFileIfExists(String relativePath) {
@@ -185,16 +185,49 @@ public class GeneralService {
             throw new ErrorHandler(HttpStatus.BAD_REQUEST, "File path cannot be empty");
         }
 
-        Path filePath = getFullPathFromLink(relativePath);
+        // Chuyển relativePath thành đường dẫn tuyệt đối
+        Path filePath = Paths.get(System.getProperty("user.dir"), relativePath);
+
         try {
             if (Files.exists(filePath)) {
-                Files.delete(filePath);
+                Files.delete(filePath); // Xóa file nếu tồn tại
+                System.out.println("File deleted successfully: " + filePath.toAbsolutePath());
             } else {
+                System.out.println("File not found: " + filePath.toAbsolutePath());
                 throw new ErrorHandler(HttpStatus.NOT_FOUND, "File not found: " + relativePath);
             }
         } catch (IOException | java.io.IOException e) {
+            System.err.println("Failed to delete file: " + filePath.toAbsolutePath());
             throw new ErrorHandler(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to delete file");
         }
     }
+
+
+
+
+
+    public String saveFile(MultipartFile file, String directory) {
+        try {
+            String uploadDir = "resources/static/" + directory;
+            Path uploadPath = Paths.get(System.getProperty("user.dir"), uploadDir);
+
+            // Tạo thư mục nếu chưa tồn tại
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            // Lưu file
+            String fileName = file.getOriginalFilename();
+            Path filePath = uploadPath.resolve(fileName);
+
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            System.out.println("File saved successfully: " + filePath.toAbsolutePath());
+            return uploadDir + fileName; // Trả về đường dẫn tương đối để lưu vào DB
+        } catch (IOException | java.io.IOException e) {
+            throw new RuntimeException("Failed to store file", e);
+        }
+    }
+
 
 }

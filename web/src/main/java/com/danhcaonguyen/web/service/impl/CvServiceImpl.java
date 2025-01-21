@@ -134,8 +134,42 @@ public class CvServiceImpl  implements CvService {
 //    }
 
 
+//    @Override
+//    public Optional<Cv> update(Integer id) {
+//        try {
+//            Account currentAccount = generalService.getCurrentAccount();
+//            User currentUser = generalService.getAssociatedUser(currentAccount);
+//
+//            Cv existingCv = cvRepository.findById(id)
+//                    .orElseThrow(() -> new ErrorHandler(HttpStatus.NOT_FOUND, "CV not found"));
+//
+//            if (!existingCv.getUser().equals(currentUser)) {
+//                throw new ErrorHandler(HttpStatus.FORBIDDEN, "Access denied");
+//            }
+//
+//            if (existingCv.getLink() != null) {
+//                generalService.deleteFileIfExists(existingCv.getLink());
+//            }
+//
+//            cvRepository.delete(existingCv);
+//
+//            Cv newCv = new Cv();
+//            newCv.setCvName(newCv.getCvName());
+//            newCv.setLink(newCv.getLink());
+//            newCv.setUser(currentUser);
+//          save(newCv);
+//
+//            return Optional.of(newCv);
+//
+//        } catch (ErrorHandler e) {
+//            throw e;
+//        } catch (Exception e) {
+//            throw new RuntimeException("An unexpected error occurred", e);
+//        }
+//    }
+
     @Override
-    public Optional<Cv> update(Integer id) {
+    public Optional<Cv> update(Integer id, String newName, MultipartFile newFile) {
         try {
             Account currentAccount = generalService.getCurrentAccount();
             User currentUser = generalService.getAssociatedUser(currentAccount);
@@ -147,17 +181,26 @@ public class CvServiceImpl  implements CvService {
                 throw new ErrorHandler(HttpStatus.FORBIDDEN, "Access denied");
             }
 
-            if (existingCv.getLink() != null) {
-                generalService.deleteFileIfExists(existingCv.getLink());
+            // Xóa file cũ nếu file mới được cung cấp
+            if (newFile != null && !newFile.isEmpty()) {
+                if (existingCv.getLink() != null) {
+                    System.out.println("Deleting old file: " + existingCv.getLink());
+                    generalService.deleteFileIfExists(existingCv.getLink()); // Xóa file cũ
+                }
+
+                // Lưu file mới
+                String filePath = generalService.saveFile(newFile, currentUser.getIdUser() + "/cv/");
+                existingCv.setLink(filePath);
+                System.out.println("Saved new file: " + filePath);
             }
 
-            cvRepository.delete(existingCv);
+            // Cập nhật tên nếu có
+            if (newName != null && !newName.isEmpty()) {
+                existingCv.setCvName(newName);
+            }
 
-            Cv newCv = new Cv();
-            newCv.setUser(currentUser);
-            cvRepository.save(newCv);
-
-            return Optional.of(newCv);
+            cvRepository.save(existingCv); // Lưu thay đổi
+            return Optional.of(existingCv);
 
         } catch (ErrorHandler e) {
             throw e;
@@ -165,6 +208,7 @@ public class CvServiceImpl  implements CvService {
             throw new RuntimeException("An unexpected error occurred", e);
         }
     }
+
 
 
 
