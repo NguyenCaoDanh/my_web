@@ -101,6 +101,7 @@ public class PersonalController extends GenericController<User, Integer> {
         }
     }
 
+    @GetMapping("find/{id}")
     private static MyInfoResponse getMyInfoResponse(User currentUser) {
         MyInfoResponse response = new MyInfoResponse();
         response.setFirstName(currentUser.getFirstName());
